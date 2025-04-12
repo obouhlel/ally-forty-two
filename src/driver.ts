@@ -105,7 +105,7 @@ export class FortyTwo
    * approach is to prefix the oauth provider name to `oauth_state` value. For example:
    * For example: "facebook_oauth_state"
    */
-  protected stateCookieName = ''
+  protected stateCookieName = '42_oauth_cookies'
 
   /**
    * Parameter name to be used for sending and receiving the state from.
@@ -113,7 +113,7 @@ export class FortyTwo
    * name to match the query string used by the provider for exchanging
    * the state.
    */
-  protected stateParamName = ''
+  protected stateParamName = 'state'
 
   /**
    * Parameter name for sending the scopes to the oauth provider.
