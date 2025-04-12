@@ -17,6 +17,7 @@
 import { Oauth2Driver } from '@adonisjs/ally'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { AllyDriverContract, AllyUserContract, ApiRequestContract } from '@adonisjs/ally/types'
+import type { RedirectRequest } from '@adonisjs/ally'
 
 /**
  *
@@ -146,17 +147,16 @@ export class FortyTwo
    * is made by the base implementation of "Oauth2" driver and this is a
    * hook to pre-configure the request.
    */
-  // protected configureRedirectRequest(request: RedirectRequest<FortyTwoScopes>) {}
+  protected configureRedirectRequest(request: RedirectRequest<FortyTwoScopes>) {
+    request.param('response_type', 'code')
+  }
 
   /**
    * Optionally configure the access token request. The actual request is made by
    * the base implementation of "Oauth2" driver and this is a hook to pre-configure
    * the request
    */
-  protected configureAccessTokenRequest(request: ApiRequestContract) {
-    request.param('response_type', 'code')
-    request.param('scope', 'public')
-  }
+  // protected configureAccessTokenRequest(request: ApiRequest) {}
 
   /**
    * Update the implementation to tell if the error received during redirect
