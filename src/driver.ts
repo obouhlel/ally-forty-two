@@ -104,7 +104,7 @@ export class FortyTwo
    * approach is to prefix the oauth provider name to `oauth_state` value. For example:
    * For example: "facebook_oauth_state"
    */
-  protected stateCookieName = '42_oauth_state'
+  protected stateCookieName = ''
 
   /**
    * Parameter name to be used for sending and receiving the state from.
@@ -112,7 +112,7 @@ export class FortyTwo
    * name to match the query string used by the provider for exchanging
    * the state.
    */
-  protected stateParamName = 'state'
+  protected stateParamName = ''
 
   /**
    * Parameter name for sending the scopes to the oauth provider.
@@ -153,7 +153,10 @@ export class FortyTwo
    * the base implementation of "Oauth2" driver and this is a hook to pre-configure
    * the request
    */
-  // protected configureAccessTokenRequest(request: ApiRequest) {}
+  protected configureAccessTokenRequest(request: ApiRequestContract) {
+    request.param('response_type', 'code')
+    request.param('scope', 'public')
+  }
 
   /**
    * Update the implementation to tell if the error received during redirect
@@ -194,8 +197,10 @@ export class FortyTwo
     accessToken: string,
     callback?: (request: ApiRequestContract) => void
   ): Promise<AllyUserContract<{ token: string; type: 'bearer' }>> {
-    const request = this.httpClient(this.config.userInfoUrl || this.userInfoUrl)
-      .header('Authorization', `Bearer ${accessToken}`)
+    const request = this.httpClient(this.config.userInfoUrl || this.userInfoUrl).header(
+      'Authorization',
+      `Bearer ${accessToken}`
+    )
 
     if (typeof callback === 'function') {
       callback(request)
