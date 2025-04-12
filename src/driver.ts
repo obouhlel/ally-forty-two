@@ -47,13 +47,17 @@ export type FortyTwoConfig = {
   userInfoUrl?: string
 }
 
-export type FortyTwoUser = {
+export type FortyTwoUserInfo = {
+  id: string
   email: string
   login: string
   first_name: string
   last_name: string
   usual_full_name: string | null
   usual_first_name: string | null
+  image: {
+    link: string
+  }
 }
 
 /**
@@ -206,14 +210,15 @@ export class FortyTwo
       callback(request)
     }
 
-    const user = await request.get()
+    const userRaw = await request.get()
+    const user: FortyTwoUserInfo = JSON.parse(userRaw)
 
     return {
-      id: user.id.toString(),
+      id: user.id,
       nickName: user.login,
-      name: user.usual_full_name ?? `${user.first_name} ${user.last_name}`,
+      name: user.usual_first_name ?? `${user.first_name} ${user.last_name}`,
       email: user.email,
-      avatarUrl: user.image_url,
+      avatarUrl: user.image.link,
       emailVerificationState: 'unsupported',
       token: {
         token: accessToken,
