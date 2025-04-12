@@ -10,7 +10,7 @@
 
 /**
 |--------------------------------------------------------------------------
- *  Search keyword "YourDriver" and replace it with a meaningful name
+ *  Search keyword "FortyTwo" and replace it with a meaningful name
 |--------------------------------------------------------------------------
  */
 
@@ -24,7 +24,7 @@ import type { AllyDriverContract, AllyUserContract, ApiRequestContract } from '@
  * token must have "token" and "type" properties and you may
  * define additional properties (if needed)
  */
-export type YourDriverAccessToken = {
+export type FortyTwoAccessToken = {
   token: string
   type: 'bearer'
 }
@@ -32,12 +32,12 @@ export type YourDriverAccessToken = {
 /**
  * Scopes accepted by the driver implementation.
  */
-export type YourDriverScopes = string
+export type FortyTwoScopes = string
 
 /**
  * The configuration accepted by the driver implementation.
  */
-export type YourDriverConfig = {
+export type FortyTwoConfig = {
   clientId: string
   clientSecret: string
   callbackUrl: string
@@ -46,13 +46,22 @@ export type YourDriverConfig = {
   userInfoUrl?: string
 }
 
+export type FortyTwoUser = {
+  email: string
+  login: string
+  first_name: string
+  last_name: string
+  usual_full_name: string | null
+  usual_first_name: string | null
+}
+
 /**
  * Driver implementation. It is mostly configuration driven except the API call
  * to get user info.
  */
-export class YourDriver
-  extends Oauth2Driver<YourDriverAccessToken, YourDriverScopes>
-  implements AllyDriverContract<YourDriverAccessToken, YourDriverScopes>
+export class FortyTwo
+  extends Oauth2Driver<FortyTwoAccessToken, FortyTwoScopes>
+  implements AllyDriverContract<FortyTwoAccessToken, FortyTwoScopes>
 {
   /**
    * The URL for the redirect request. The user will be redirected on this page
@@ -60,21 +69,21 @@ export class YourDriver
    *
    * Do not define query strings in this URL.
    */
-  protected authorizeUrl = ''
+  protected authorizeUrl = 'https://api.intra.42.fr/oauth/authorize'
 
   /**
    * The URL to hit to exchange the authorization code for the access token
    *
    * Do not define query strings in this URL.
    */
-  protected accessTokenUrl = ''
+  protected accessTokenUrl = 'https://api.intra.42.fr/oauth/token'
 
   /**
    * The URL to hit to get the user details
    *
    * Do not define query strings in this URL.
    */
-  protected userInfoUrl = ''
+  protected userInfoUrl = 'https://api.intra.42.fr/v2/me'
 
   /**
    * The param name for the authorization code. Read the documentation of your oauth
@@ -95,7 +104,7 @@ export class YourDriver
    * approach is to prefix the oauth provider name to `oauth_state` value. For example:
    * For example: "facebook_oauth_state"
    */
-  protected stateCookieName = 'YourDriver_oauth_state'
+  protected stateCookieName = '42_oauth_state'
 
   /**
    * Parameter name to be used for sending and receiving the state from.
@@ -117,10 +126,12 @@ export class YourDriver
 
   constructor(
     ctx: HttpContext,
-    public config: YourDriverConfig
+    public config: FortyTwoConfig
   ) {
     super(ctx, config)
-
+    this.config.authorizeUrl = this.authorizeUrl
+    this.config.accessTokenUrl = this.accessTokenUrl
+    this.config.userInfoUrl = this.userInfoUrl
     /**
      * Extremely important to call the following method to clear the
      * state set by the redirect request.
@@ -135,7 +146,7 @@ export class YourDriver
    * is made by the base implementation of "Oauth2" driver and this is a
    * hook to pre-configure the request.
    */
-  // protected configureRedirectRequest(request: RedirectRequest<YourDriverScopes>) {}
+  // protected configureRedirectRequest(request: RedirectRequest<FortyTwoScopes>) {}
 
   /**
    * Optionally configure the access token request. The actual request is made by
@@ -161,7 +172,7 @@ export class YourDriver
    */
   async user(
     callback?: (request: ApiRequestContract) => void
-  ): Promise<AllyUserContract<YourDriverAccessToken>> {
+  ): Promise<AllyUserContract<FortyTwoAccessToken>> {
     const accessToken = await this.accessToken()
     const request = this.httpClient(this.config.userInfoUrl || this.userInfoUrl)
 
@@ -176,6 +187,7 @@ export class YourDriver
     /**
      * Write your implementation details here.
      */
+    return this.userFromToken(accessToken.token, callback)
   }
 
   async userFromToken(
@@ -183,18 +195,27 @@ export class YourDriver
     callback?: (request: ApiRequestContract) => void
   ): Promise<AllyUserContract<{ token: string; type: 'bearer' }>> {
     const request = this.httpClient(this.config.userInfoUrl || this.userInfoUrl)
+      .header('Authorization', `Bearer ${accessToken}`)
 
-    /**
-     * Allow end user to configure the request. This should be called after your custom
-     * configuration, so that the user can override them (if needed)
-     */
     if (typeof callback === 'function') {
       callback(request)
     }
 
-    /**
-     * Write your implementation details here
-     */
+    const user = await request.get()
+
+    return {
+      id: user.id.toString(),
+      nickName: user.login,
+      name: user.usual_full_name ?? `${user.first_name} ${user.last_name}`,
+      email: user.email,
+      avatarUrl: user.image_url,
+      emailVerificationState: 'unsupported',
+      token: {
+        token: accessToken,
+        type: 'bearer',
+      },
+      original: user,
+    }
   }
 }
 
@@ -202,6 +223,6 @@ export class YourDriver
  * The factory function to reference the driver implementation
  * inside the "config/ally.ts" file.
  */
-export function YourDriverService(config: YourDriverConfig): (ctx: HttpContext) => YourDriver {
-  return (ctx) => new YourDriver(ctx, config)
+export function FortyTwoService(config: FortyTwoConfig): (ctx: HttpContext) => FortyTwo {
+  return (ctx) => new FortyTwo(ctx, config)
 }
